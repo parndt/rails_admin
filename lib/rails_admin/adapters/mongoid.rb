@@ -283,7 +283,7 @@ module RailsAdmin
           {
             :name => name.to_sym,
             :pretty_name => display_name,
-            :type => association_type_lookup(macro),
+            :type => type_lookup,
             :model_proc => Proc.new { model_proc_lookup },
             :primary_key_proc => Proc.new { primary_key_lookup },
             :foreign_key => foreign_key_lookup,
@@ -362,7 +362,7 @@ module RailsAdmin
         end
 
         def type_lookup
-          case association_macro.to_sym
+          case macro.to_sym
           when :belongs_to, :referenced_in, :embedded_in
             :belongs_to
           when :has_one, :references_one, :embeds_one
@@ -377,7 +377,7 @@ module RailsAdmin
         end
 
         delegate :foreign_key, :macro, :name, :options, :scope, :polymorphic?,
-                 :klass, :inverse_of, :as,
+                 :klass, :inverse_of, :as, :inverse_type,
                  :to => :association, :prefix => false
         delegate :name, :nested_attributes_options, :to => :model, :prefix => true
         delegate :polymorphic_parents, :to => RailsAdmin::AbstractModel
@@ -402,12 +402,12 @@ module RailsAdmin
         def build_statement_for_type
           case type
           when :boolean
-            return { column => false } if ['false', 'f', '0'].include?(value)
-            return { column => true } if ['true', 't', '1'].include?(value)
+            return { column => false } if %w[false f 0].include?(@value)
+            return { column => true } if %w[true t 1].include?(@value)
           when :integer, :decimal, :float
-            case value
+            case @value
             when Array then
-              val, range_begin, range_end = *value.map do |v|
+              val, range_begin, range_end = *@value.map do |v|
                 if (v.to_i.to_s == v || v.to_f.to_s == v)
                   type == :integer ? v.to_i : v.to_f
                 end
@@ -419,34 +419,34 @@ module RailsAdmin
                 { column => val } if val
               end
             else
-              if (value.to_i.to_s == value || value.to_f.to_s == value)
-                type == :integer ? { column => value.to_i } : { column => value.to_f }
+              if (@value.to_i.to_s == @value || @value.to_f.to_s == @value)
+                type == :integer ? { column => @value.to_i } : { column => @value.to_f }
               end
             end
           when :string, :text
-            return if value.blank?
-            value = case operator
+            return if @value.blank?
+            @value = case operator
             when 'default', 'like'
-              Regexp.compile(Regexp.escape(value), Regexp::IGNORECASE)
+              Regexp.compile(Regexp.escape(@value), Regexp::IGNORECASE)
             when 'starts_with'
-              Regexp.compile("^#{Regexp.escape(value)}", Regexp::IGNORECASE)
+              Regexp.compile("^#{Regexp.escape(@value)}", Regexp::IGNORECASE)
             when 'ends_with'
-              Regexp.compile("#{Regexp.escape(value)}$", Regexp::IGNORECASE)
+              Regexp.compile("#{Regexp.escape(@value)}$", Regexp::IGNORECASE)
             when 'is', '='
-              value.to_s
+              @value.to_s
             else
               return
             end
-            { column => value }
+            { column => @value }
           when :date
-            datetime_filter(column, *get_filtering_duration(operator, value))
+            datetime_filter(column, *get_filtering_duration)
           when :datetime, :timestamp
-            datetime_filter(column, *get_filtering_duration(operator, value), true)
+            datetime_filter(column, *get_filtering_duration, true)
           when :enum
-            return if value.blank?
-            { column => { "$in" => Array.wrap(value) } }
+            return if @value.blank?
+            { column => { "$in" => Array.wrap(@value) } }
           when :belongs_to_association, :bson_object_id
-            object_id = (object_id_from_string(value) rescue nil)
+            object_id = (object_id_from_string(@value) rescue nil)
             { column => object_id } if object_id
           end
         end
