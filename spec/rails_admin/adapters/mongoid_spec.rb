@@ -636,7 +636,7 @@ describe "RailsAdmin::Adapters::Mongoid", :mongoid => true do
         map{|h| FactoryGirl.create :player, h}
     end
 
-    it "makes conrrect query" do
+    it "makes correct query" do
       expect(@abstract_model.all(:filters  =>
         {"name" => {"0000" => {:o => "like", :v => "foo"}},
          "team" => {"0001" => {:o => "like", :v => "bar"}}}
