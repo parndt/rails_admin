@@ -393,6 +393,16 @@ module RailsAdmin
           }
         end
 
+        def range_filter(min, max)
+          if min && max
+            { @column => { '$gte' => min, '$lte' => max } }
+          elsif min
+            { @column => { '$gte' => min } }
+          elsif max
+            { @column => { '$lte' => max } }
+          end
+        end
+
         private
 
         def build_statement_for_type
@@ -434,29 +444,12 @@ module RailsAdmin
               return
             end
             { @column => @value }
-          when :date
-            range_filter(*get_filtering_duration)
-          when :datetime, :timestamp
-            start_date, end_date = get_filtering_duration
-            start_date = start_date.to_time.beginning_of_day if start_date
-            end_date = end_date.to_time.end_of_day if end_date
-            range_filter(start_date, end_date)
           when :enum
             return if @value.blank?
             { @column => { "$in" => Array.wrap(@value) } }
           when :belongs_to_association, :bson_object_id
             object_id = (object_id_from_string(@value) rescue nil)
             { @column => object_id } if object_id
-          end
-        end
-
-        def range_filter(min, max)
-          if min && max
-            { @column => { '$gte' => min, '$lte' => max } }
-          elsif min
-            { @column => { '$gte' => min } }
-          elsif max
-            { @column => { '$lte' => max } }
           end
         end
 

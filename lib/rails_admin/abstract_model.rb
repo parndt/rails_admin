@@ -121,7 +121,7 @@ module RailsAdmin
         return if [@operator, @value].any? { |v| v == '_discard' }
 
         unary_operators[@operator] || unary_operators[@value] ||
-          build_statement_for_type
+          build_statement_for_type_generic
       end
 
       protected
@@ -130,12 +130,28 @@ module RailsAdmin
         FilteringDuration.new(@operator, @value).get_duration
       end
 
+      def build_statement_for_type_generic
+        build_statement_for_type || case @type
+          when :date
+            range_filter(*get_filtering_duration)
+          when :datetime, :timestamp
+            start_date, end_date = get_filtering_duration
+            start_date = start_date.to_time.beginning_of_day if start_date
+            end_date = end_date.to_time.end_of_day if end_date
+            range_filter(start_date, end_date)
+          end
+      end
+
       def build_statement_for_type
         raise "You must override build_statement_for_type in your StatementBuilder"
       end
 
       def unary_operators
         raise "You must override unary_operators in your StatementBuilder"
+      end
+
+      def range_filter(min, max)
+        raise "You must override range_filter(min, max) in your StatementBuilder"
       end
       
       class FilteringDuration
