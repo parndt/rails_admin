@@ -412,25 +412,8 @@ module RailsAdmin
           return { @column => true } if %w[true t 1].include?(@value)
         end
 
-        def build_statement_for_integer_decimal_or_float
-          case @value
-          when Array then
-            val, range_begin, range_end = *@value.map do |v|
-              if (v.to_i.to_s == v || v.to_f.to_s == v)
-                @type == :integer ? v.to_i : v.to_f
-              end
-            end
-            case @operator
-            when 'between'
-              datetime_filter(range_begin, range_end)
-            else
-              { @column => val } if val
-            end
-          else
-            if (@value.to_i.to_s == @value || @value.to_f.to_s == @value)
-              @type == :integer ? { @column => @value.to_i } : { @column => @value.to_f }
-            end
-          end
+        def column_for_value(value)
+          { @column => value }
         end
 
         def build_statement_for_string_or_text
