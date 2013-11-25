@@ -130,6 +130,13 @@ module RailsAdmin
         FilteringDuration.new(@operator, @value).get_duration
       end
 
+      def build_statement_for_type_generic
+        build_statement_for_type || case @type
+          when :date                  then build_statement_for_date
+          when :datetime, :timestamp  then build_statement_for_datetime_or_timestamp
+          end
+      end
+
       def build_statement_for_type
         raise "You must override build_statement_for_type in your StatementBuilder"
       end
@@ -144,7 +151,7 @@ module RailsAdmin
           end
           case @operator
           when 'between'
-            datetime_filter(range_begin, range_end)
+            range_filter(range_begin, range_end)
           else
             column_for_value(val) if val
           end
@@ -156,17 +163,24 @@ module RailsAdmin
       end
 
       def build_statement_for_date
-        datetime_filter(*get_filtering_duration)
+        range_filter(*get_filtering_duration)
       end
 
       def build_statement_for_datetime_or_timestamp
-        datetime_filter(*get_filtering_duration, true)
+        start_date, end_date = get_filtering_duration
+        start_date = start_date.to_time.beginning_of_day if start_date
+        end_date = end_date.to_time.end_of_day if end_date
+        range_filter(start_date, end_date)
       end
 
       def unary_operators
         raise "You must override unary_operators in your StatementBuilder"
       end
-      
+
+      def range_filter(min, max)
+        raise "You must override range_filter in your StatementBuilder"
+      end
+
       class FilteringDuration
         def initialize(operator, value)
           @value = value

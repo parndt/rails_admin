@@ -238,18 +238,13 @@ module RailsAdmin
 
         private
 
-        def datetime_filter(start_date, end_date, datetime = false)
-          if datetime
-            start_date = start_date.to_time.beginning_of_day if start_date
-            end_date = end_date.to_time.end_of_day if end_date
-          end
-
-          if start_date && end_date
-            ["(#{@column} BETWEEN ? AND ?)", start_date, end_date]
-          elsif start_date
-            ["(#{@column} >= ?)", start_date]
-          elsif end_date
-            ["(#{@column} <= ?)", end_date]
+        def range_filter(min, max)
+          if min && max
+            ["(#{@column} BETWEEN ? AND ?)", min, max]
+          elsif min
+            ["(#{@column} >= ?)", min]
+          elsif max
+            ["(#{@column} <= ?)", max]
           end
         end
 
@@ -257,11 +252,9 @@ module RailsAdmin
           case @type
             when :boolean                   then build_statement_for_boolean
             when :integer, :decimal, :float then build_statement_for_integer_decimal_or_float
-            when :belongs_to_association    then build_statement_for_belongs_to_association
             when :string, :text             then build_statement_for_string_or_text
-            when :date                      then build_statement_for_date
-            when :datetime, :timestamp      then build_statement_for_datetime_or_timestamp
             when :enum                      then build_statement_for_enum
+            when :belongs_to_association    then build_statement_for_belongs_to_association
           end
         end
 
