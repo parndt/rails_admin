@@ -245,6 +245,7 @@ module RailsAdmin
             when :belongs_to_association    then build_statement_for_belongs_to_association
             when :string, :text             then build_statement_for_string_or_text
             when :enum                      then build_statement_for_enum
+            when :belongs_to_association    then build_statement_for_belongs_to_association
           end
         end
 
