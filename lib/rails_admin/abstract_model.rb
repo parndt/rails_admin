@@ -146,6 +146,38 @@ module RailsAdmin
         raise "You must override build_statement_for_type in your StatementBuilder"
       end
 
+      def build_statement_for_integer_decimal_or_float
+        case @value
+        when Array then
+          val, range_begin, range_end = *@value.map do |v|
+            if (v.to_i.to_s == v || v.to_f.to_s == v)
+              @type == :integer ? v.to_i : v.to_f
+            end
+          end
+          case @operator
+          when 'between'
+            range_filter(range_begin, range_end)
+          else
+            column_for_value(val) if val
+          end
+        else
+          if @value.to_i.to_s == @value || @value.to_f.to_s == @value
+            @type == :integer ? column_for_value(@value.to_i) : column_for_value(@value.to_f)
+          end
+        end
+      end
+
+      def build_statement_for_date
+        range_filter(*get_filtering_duration)
+      end
+
+      def build_statement_for_datetime_or_timestamp
+        start_date, end_date = get_filtering_duration
+        start_date = start_date.to_time.beginning_of_day if start_date
+        end_date = end_date.to_time.end_of_day if end_date
+        range_filter(start_date, end_date)
+      end
+
       def unary_operators
         raise "You must override unary_operators in your StatementBuilder"
       end
