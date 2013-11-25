@@ -132,13 +132,10 @@ module RailsAdmin
 
       def build_statement_for_type_generic
         build_statement_for_type || case @type
-          when :date
-            range_filter(*get_filtering_duration)
-          when :datetime, :timestamp
-            start_date, end_date = get_filtering_duration
-            start_date = start_date.to_time.beginning_of_day if start_date
-            end_date = end_date.to_time.end_of_day if end_date
-            range_filter(start_date, end_date)
+          when :date                  then build_statement_for_date
+          when :datetime, :timestamp  then build_statement_for_datetime_or_timestamp
+          else
+            raise "Statement builder for type '#{@type}' not implemented."
           end
       end
 
